@@ -24,10 +24,12 @@ Dependiendo de si los repartidores se mueven de forma simultánea o planifican d
 
 ----
 
+https://www.youtube.com/watch?v=hQa9JTtq4Ok
+
 ## Métodos Heurísticos y Metaheurísticos
 Cuando el grafo es masivo o el problema es de tipo NP-duro (como el Traveling Salesperson Problem o TSP), los algoritmos exactos tardan demasiado. Se recurre a aproximaciones inteligentes:
 
-* Búsqueda Codiciosa (Greedy Best-First): Evalúa los nodos basándose únicamente en la estimación heurística hasta la meta (\(h(n)\)), ignorando el costo acumulado. Es muy rápida pero no garantiza la ruta más corta.
+
 * Algoritmos Genéticos (GA): Evolucionan una población de rutas posibles combinándolas y mutándolas para encontrar soluciones casi óptimas en problemas de optimización de rutas (como logística urbana).
-* Optimización por Colonia de Hormigas (ACO): Simula el comportamiento de las hormigas dejando rastros de feromonas en las aristas. Las rutas más cortas acumulan más feromona, guiando a futuras iteraciones. (No garantiza el camino más corto).
+
 * Búsqueda Tabú (Tabu Search): Explora el espacio de soluciones saltando de una ruta a otra vecina, bloqueando temporalmente (lista tabú) los movimientos recientes para evitar quedar atrapada en óptimos locales.

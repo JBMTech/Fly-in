@@ -1,15 +1,13 @@
+MAP ?= map
 
 install:
 		uv sync --all-groups
 
 run:
-		uv run python -m src.main
-
-help:
-		uv run python -m src.main --help
+		uv run python -m src.main $(MAP)
 
 debug:
-		uv run python3 -m pdb -m src
+		uv run python3 -m pdb -m src $(MAP)
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
@@ -28,4 +26,4 @@ lint:
             --check-untyped-defs \
             --exclude '^(venv|\.venv|env)/'
 
-.PHONY: install run help debug clean fclean lint
+.PHONY: install run debug clean fclean lint
