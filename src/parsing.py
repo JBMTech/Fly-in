@@ -1,4 +1,5 @@
 from graph import Grahp
+from zone import Zone
 from exceptions import ParsingError
 from typing import Dict, Set, Tuple, Any
 
@@ -8,7 +9,7 @@ class Parser:
         self.file_map = file_map
         self.nb_drones = 0
         self.zone_names: Set[str] = set()
-        self.cood: Set[tuple[int, int]] = set()
+        self.coordinates: Set[tuple[int, int]] = set()
         self.connections: Set[set[str]] = set()
         self.graph = Grahp()
 
@@ -74,11 +75,17 @@ class Parser:
     
         data = part[1].strip()
 
-        data_index = data.find("[")
-        metadata = data[data_index + 1:-1]
+        metadata: Dict[str, str | int] = {}
 
-        base_data = data[:data_index]
-        metadata_string = metadata
+        # Obtener información de los metadatos
+        if data in "[" and data in "]":
+            data_index = data.find("[")
+            metadata_string = data[data_index + 1:-1]
+
+            base_data = data[:data_index]
+            metadata = self.valid_metadata(metadata_string)
+        else:
+            base_data = data
 
         element = base_data.split(" ")
         if len(element) != 3:
@@ -90,9 +97,15 @@ class Parser:
         self.zone_names.add(name)
 
         X, Y = self.valid_xy(element[1], element[2])
-        if (X, Y) in self.cood:
+        if (X, Y) in self.coordinates:
             raise ParsingError(f"[ERRROR]: Duplicate Coordinates ({X}, {Y})") 
-        self.cood.add((X, Y))
+        self.coordinates.add((X, Y))
+
+        result_max_drones = int(metadata.get("max_drones", 1))
+        zone = str(metadata.get("zone", "normal"))
+        color = str(metadata.get("color", "#FFFFFF"))
+
+        new_zone = Zone(name, X, Y, result_max_drones, color, zone)
 
 
     def valid_xy(self, x: str, y: str) -> Tuple[int, int]:
@@ -104,7 +117,50 @@ class Parser:
         return X, Y
 
 
-    def valid_connection(self, line: str) -> None:
-        ...
+    def valid_metadata(self, metadata: str) -> Dict[str, str | int]:
+        metadata_result: Dict[str, str | int] = {}
+        zone_allowed = ["normal", "restricted", "priority", "blocked"]
 
-    
+        if metadata.startswith("[") and metadata.endswith("]"):
+            elements = metadata.split(" ")
+
+            for element in elements:
+                key, value = element.split("=")
+
+                if key == "color":
+                    metadata_result[key] = value
+                elif key == "max_drones":
+                    try:
+                        drones = int(value)
+                        if drones <= 0:
+                            raise ParsingError("[ERROR]: invalud metadata: max_drone")
+                        metadata_result[key] = drones
+                    except ValueError:
+                        raise ParsingError("[ERROR]: invalid metadato: max_drone")
+                elif key == "zone":
+                    if value in zone_allowed:
+                        metadata_result[key] = value
+                    else:
+                        raise ParsingError("[ERROR]: invalid metadata: zone not allowed")
+
+        return metadata_result
+
+
+    def valid_connection(self, line: str) -> None:
+        elements = line.split(":")
+
+        if len(elements) != 2:
+            raise ParsingError("[ERROR]: Invalid connection data")  
+
+        if elements in "[" and elements in "]":
+            parts = elements[1].split(" ")
+            base_data = parts[0].strip()
+            metadata_string = parts[1].replace("[]", "")
+            new_data
+
+
+    def valid_metadata_connection(self, metadata: str) -> Dict[str, int]:
+
+        if not metadata:
+            raise ParsingError("[ERROR]: Metadata connection is empty")
+        key, value = metadata.split("=")
