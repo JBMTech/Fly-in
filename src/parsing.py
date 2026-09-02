@@ -1,7 +1,7 @@
-from graph import Graph
-from zone import Zone
-from connection import Connection
-from exceptions import ParsingError
+from .graph import Graph
+from .zone import Zone
+from .connection import Connection
+from .exceptions import ParsingError
 from typing import Dict, Set, Tuple, FrozenSet
 
 
@@ -19,12 +19,12 @@ class Parser:
             with open(self.file_map, "r") as f:
                 lines = f.readlines()
         except FileNotFoundError:
-            raise ParsingError("[ERROR]: Not find File.")
+            raise ParsingError("Not find File.")
         except PermissionError:
-            raise ParsingError("[ERROR]: You do not have permission to read this File.")
+            raise ParsingError("You do not have permission to read this File.")
 
         if not lines:
-            raise ParsingError("[ERROR]: The file is empty.")
+            raise ParsingError("The file is empty.")
 
         nb_drones_exist = False
         start_zone_exist = False
@@ -41,65 +41,73 @@ class Parser:
 
                 if lower_line.startswith("nb_drones:"):
                     if nb_drones_exist:
-                        raise ParsingError("[ERROR]: nb_drones already exist.")
+                        raise ParsingError("nb_drones already exist.")
                     self.valid_nb_drones(line)
                     nb_drones_exist = True
 
                 elif lower_line.startswith("start_hub:"):
                     if start_zone_exist:
-                        raise ParsingError("[ERROR]: start_hub already exists.")
+                        raise ParsingError("start_hub already exists.")
                     self.valid_zone(line)
                     start_zone_exist = True
 
                 elif lower_line.startswith("hub:"):
                     if not start_zone_exist:
                         raise ParsingError(
-                            "[ERROR]: start_hub must be defined before hubs.")
+                            "start_hub must be defined before hubs.")
                     if end_zone_exist:
                         raise ParsingError(
-                            "[ERROR]: hub cannot appear after end_hub.")
+                            "hub cannot appear after end_hub.")
                     self.valid_zone(line)
 
                 elif lower_line.startswith("end_hub:"):
                     if end_zone_exist:
-                        raise ParsingError("[ERROR]: end_hub already exists.")
+                        raise ParsingError("end_hub already exists.")
                     self.valid_zone(line)
                     end_zone_exist = True
 
                 elif lower_line.startswith("connection:"):
                     self.valid_connection(line)
                 else:
-                    raise ParsingError("[ERROR]: Invalid Data")
+                    raise ParsingError("Invalid Data")
 
             except ParsingError as ex:
-                raise ParsingError(f"[ERROR]: line {line_num}: {ex}.")
+                raise ParsingError(f"line {line_num}: {ex}.")
 
-            if not nb_drones_exist:
-                raise ParsingError("[ERROR]: nb_drones is missing.")
+        if not nb_drones_exist:
+            raise ParsingError("nb_drones is missing.")
 
-            if not start_zone_exist:
-                raise ParsingError("[ERROR]: start_hub is missing.")
+        if not start_zone_exist:
+            raise ParsingError("start_hub is missing.")
 
-            if not end_zone_exist:
-                raise ParsingError("[ERROR]: end_hub is missing.")
+        if not end_zone_exist:
+            raise ParsingError("end_hub is missing.")
 
 
     def valid_nb_drones(self, line: str) -> None:
         aux = line.split(":", 1)
 
         if len(aux) != 2:
-            raise ParsingError("[ERROR]: Invalid nb_drones.")
+            raise ParsingError("Invalid nb_drones.")
         try:
             nb_drones = int(aux[1].strip())
         except ValueError:
-            raise ParsingError("[ERROR]: Invalid nb_drones.")
+            raise ParsingError("Invalid nb_drones.")
         
         if nb_drones <= 0:
-            raise ParsingError("[ERROR]: nb_drones must be a positive value.")
+            raise ParsingError("nb_drones must be a positive value.")
 
         self.nb_drones = nb_drones
 
     def valid_zone(self, line: str) -> None:
+
+        is_start = False
+        is_end = False
+
+        if line.lower().startswith("start_hub:"):
+            is_start = line.lower().startswith("start_hub:")
+        elif line.lower().startswith("end_hub:"):
+            is_end = line.lower().startswith("end_hub:")
 
         part = line.split(":", 1)
     
@@ -110,7 +118,7 @@ class Parser:
         # Obtener información de los metadatos
         if "[" in data and "]" in data:
             if not ("[" in data and data.endswith("]")):
-                raise ParsingError("[ERROR]: Invalid metadata.")
+                raise ParsingError("Invalid metadata.")
 
             data_index = data.find("[")
             metadata_string = data[data_index + 1:-1]
@@ -122,16 +130,16 @@ class Parser:
 
         element = base_data.split()
         if len(element) != 3:
-            raise ParsingError(f"[ERROR]: <name> <x> <y>, result: {element}")
+            raise ParsingError(f"<name> <x> <y>, result: {element}")
 
         name = element[0]
         if name in self.zone_names:
-            raise ParsingError(f"[ERROR]: Duplicate {name}")
+            raise ParsingError(f"Duplicate {name}")
         self.zone_names.add(name)
 
         X, Y = self.valid_xy(element[1], element[2])
         if (X, Y) in self.coordinates:
-            raise ParsingError(f"[ERROR]: Duplicate Coordinates ({X}, {Y})") 
+            raise ParsingError(f"Duplicate Coordinates ({X}, {Y})") 
         self.coordinates.add((X, Y))
 
         result_max_drones = int(metadata.get("max_drones", 1))
@@ -141,13 +149,18 @@ class Parser:
         new_zone = Zone(name, X, Y, result_max_drones, color, zone)
         self.graph.add_zone(new_zone)
 
+        if is_start:
+            self.graph.start_zone = new_zone
+        elif is_end:
+            self.graph.end_zone = new_zone
+
 
     def valid_xy(self, x: str, y: str) -> Tuple[int, int]:
         try:
             X = int(x)
             Y = int(y)
         except ValueError:
-            raise ParsingError("[ERROR]: Invalid Coordinates")
+            raise ParsingError("Invalid Coordinates")
         return X, Y
 
 
@@ -160,31 +173,31 @@ class Parser:
         for element in elements:
 
             if element.count("=") != 1:
-                raise ParsingError("[ERROR]: Invalid metadata.")
+                raise ParsingError("Invalid metadata.")
             key, value = element.split("=")
 
             if key in metadata_result:
-                raise ParsingError(f"[ERROR]: Duplicate metadata: {key}")
+                raise ParsingError(f"Duplicate metadata: {key}")
 
             if key == "color":
                 if not value:
-                    raise ParsingError("[ERROR]: Color cannot be empty.")
+                    raise ParsingError("Color cannot be empty.")
                 metadata_result[key] = value
             elif key == "max_drones":
                 try:
                     drones = int(value)
                     if drones <= 0:
-                        raise ParsingError("[ERROR]: invalud metadata: max_drone")
+                        raise ParsingError("invalud metadata: max_drone")
                     metadata_result[key] = drones
                 except ValueError:
-                    raise ParsingError("[ERROR]: invalid metadato: max_drone")
+                    raise ParsingError("invalid metadato: max_drone")
             elif key == "zone":
                 if value in zone_allowed:
                     metadata_result[key] = value
                 else:
-                    raise ParsingError("[ERROR]: invalid metadata: zone not allowed")
+                    raise ParsingError("invalid metadata: zone not allowed")
             else:
-                raise ParsingError(f"[ERROR]: Invalid metadata key: {key}")
+                raise ParsingError(f"Invalid metadata key: {key}")
 
         return metadata_result
 
@@ -193,7 +206,7 @@ class Parser:
         elements = line.split(":")
 
         if len(elements) != 2:
-            raise ParsingError("[ERROR]: Invalid connection data")  
+            raise ParsingError("Invalid connection data")  
 
         data_capacity = 1
         elements[1].strip()
@@ -202,7 +215,7 @@ class Parser:
             parts = elements[1].split("[", 1)
 
             if len(parts) != 2:
-                raise ParsingError("[ERROR]: Invalid metadata.")
+                raise ParsingError("Invalid metadata.")
 
             base_data = parts[0].strip()
             metadata_string = parts[1].replace("]", "")
@@ -213,27 +226,27 @@ class Parser:
         point_connection = base_data.split("-", 1)
 
         if len(point_connection) != 2:
-            raise ParsingError("[ERROR]: Invalid connection format.")
+            raise ParsingError("Invalid connection format.")
 
         zone1 = point_connection[0].strip()
         zone2 = point_connection[1].strip()
 
         if not zone1 or not zone2:
-            raise ParsingError("[ERROR]: Connection contains an empty zone.")
+            raise ParsingError("Connection contains an empty zone.")
 
         if zone1 not in self.zone_names:
-            raise ParsingError(f"[ERROR]: Zone '{zone1}' does not exist.")
+            raise ParsingError(f"Zone '{zone1}' does not exist.")
 
         if zone2 not in self.zone_names:
-            raise ParsingError(f"[ERROR]: Zone '{zone2}' does not exist.")
+            raise ParsingError(f"Zone '{zone2}' does not exist.")
 
         if zone1 == zone2:
-            raise ParsingError("[ERROR]: A zone cannot connect to itself.")
+            raise ParsingError("A zone cannot connect to itself.")
 
         connection = frozenset([zone1, zone2])
 
         if connection in self.connections:
-            raise ParsingError("[ERROR]: Duplicate connection.")
+            raise ParsingError("Duplicate connection.")
 
         self.connections.add(connection)
     
@@ -244,7 +257,7 @@ class Parser:
     def valid_metadata_connection(self, metadata: str) -> int:
 
         if not metadata:
-            raise ParsingError("[ERROR]: Metadata connection is empty.")
+            raise ParsingError("Metadata connection is empty.")
     
         key, value = metadata.split("=", 1)
 
@@ -252,10 +265,10 @@ class Parser:
             try:
                 max_capacity = int(value)
                 if max_capacity < 1:
-                    raise ParsingError("[ERROR]: Metada conection invalid, it must be positive.")
+                    raise ParsingError("Metada conection invalid, it must be positive.")
             except ValueError:
-                raise ParsingError("[ERROR]: Metadata conection invalid.")
+                raise ParsingError("Metadata conection invalid.")
         else:
-            raise ParsingError("[ERROR]: Invalid metadata key.")
+            raise ParsingError("Invalid metadata key.")
 
         return max_capacity

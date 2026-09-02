@@ -7,7 +7,7 @@ run:
 		uv run python -m src.main $(MAP)
 
 debug:
-		uv run python3 -m pdb -m src $(MAP)
+		uv run python -m pdb -m src.main $(MAP)
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

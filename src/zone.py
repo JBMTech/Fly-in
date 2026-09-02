@@ -1,5 +1,5 @@
 from typing import List
-from drone import Drone
+from .drone import Drone
 
 
 class Zone:
