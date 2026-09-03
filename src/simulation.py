@@ -1,7 +1,6 @@
 from typing import List
 from .graph import Graph
 from .drone import Drone
-from .pathfinding import Pathfinding
 from .zone import Zone
 
 
@@ -38,8 +37,16 @@ class Simulation:
             start.drones.append(drone)
 
     def can_move(self, drone: Drone) -> bool:
-        current = drone.current_zone()
-        next_zone = drone.path[drone.current_point + 1]
+
+        if drone.finished():
+            return False
+
+        next_zone = drone.path[
+            drone.current_point + 1
+        ]
+
+        if next_zone == self.graph.end_zone:
+            return True
 
         if len(next_zone.drones) >= next_zone.max_drones:
             return False
@@ -55,14 +62,19 @@ class Simulation:
             if drone.finished():
                 continue
 
-            if self.can_move(drone):
-                current = drone.current_zone()
-                next_zone = drone.path[drone.current_point + 1]
+            if not self.can_move(drone):
+                continue
 
-                current.drones.remove(drone)
-                next_zone.drones.append(drone)
+            current = drone.current_zone()
 
-                drone.move()
+            next_zone = drone.path[
+                drone.current_point + 1
+            ]
+
+            current.drones.remove(drone)
+            next_zone.drones.append(drone)
+
+            drone.move()
 
     def all_finished(self) -> bool:
 
@@ -70,20 +82,3 @@ class Simulation:
             drone.finished()
             for drone in self.drones
         )
-
-
-    def run(self) -> None:
-
-        self.initialize_drones()
-
-        while not self.all_finished():
-
-            self.simulate_turn()
-
-            print(f"Turn {self.turn}")
-
-            for drone in self.drones:
-                print(
-                    f"Drone {drone.id}: "
-                    f"{drone.current_zone().name}"
-                )

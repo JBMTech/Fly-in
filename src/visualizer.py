@@ -1,4 +1,5 @@
 import pygame
+import math
 from .graph import Graph
 from .simulation import Simulation
 from typing import Any
@@ -25,6 +26,8 @@ class Visualizer:
         self.scale = 1
         self.offset_x = 0
         self.offset_y = 0
+
+        self.font = pygame.font.Font(None, 36)
 
         self.calculate_transform()
 
@@ -89,6 +92,7 @@ class Visualizer:
         self.draw_connections()
         self.draw_zones()
         self.draw_drones()
+        self.draw_turn()
 
         pygame.display.flip()
 
@@ -134,17 +138,39 @@ class Visualizer:
 
     def draw_drones(self) -> None:
 
-        for drone in self.simulation.drones:
+        for zone in self.graph.zones.values():
 
-            zone = drone.current_zone()
-            position = self.screen_position(zone)
+            drones = zone.drones
+    
+            if not drones:
+                continue
 
-            pygame.draw.circle(
-                self.screen,
-                (255, 0, 0),
-                position,
-                7
-            )
+            center_x, center_y = self.screen_position(zone)
+
+            total = len(drones)
+
+            for index, drone in enumerate(drones):
+                angle = 2 * math.pi *index / total
+                radius = 35
+                x = int(center_x + math.cos(angle) * radius)
+                y = int(center_y + math.sin(angle) * radius)
+
+                pygame.draw.circle(
+                    self.screen,
+                    (255, 250, 250),
+                    (x, y),
+                    7
+                )
+
+    def draw_turn(self) -> None:
+
+        text = self.font.render(
+            f"Turn: {self.simulation.turn}",
+            True,
+            (255, 255, 255)
+        )
+
+        self.screen.blit(text, (30, 30))
 
     def run(self) -> None:
 
@@ -159,11 +185,15 @@ class Visualizer:
                 if event.type == pygame.QUIT:
                     running = False
 
-            if not self.simulation.all_finished():
-                self.simulation.simulate_turn()
+                elif event.type == pygame.KEYDOWN:
+
+                    if event.key == pygame.K_RIGHT:
+
+                        if not self.simulation.all_finished():
+                            self.simulation.simulate_turn()
 
             self.draw()
 
-            self.clock.tick(2)
+            self.clock.tick(60)
 
         pygame.quit()
