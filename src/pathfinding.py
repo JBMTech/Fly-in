@@ -13,13 +13,25 @@ class Pathfinding:
         """
         Estimate the distance from zone to the goal.
         """
+
         goal = self.graph.end_zone
 
         return abs(zone.x - goal.x) + abs(zone.y - goal.y)
 
+    def movement_cost(self, zone: Zone) -> int:
+        """
+        Return the cost of entering a zone.
+        """
+
+        if zone.zone_type == "restricted":
+            return 3
+
+        return 1
+
     def find_path(self) -> List[Zone]:
         """
-        Find the shortest path from start_zone to end_zone using A*.
+        Find the lowest-cost path from start_zone
+        to end_zone using A*.
         """
 
         start = self.graph.start_zone
@@ -28,19 +40,19 @@ class Pathfinding:
         if start is None or goal is None:
             return []
 
-        # Priority queue:
-        # (f_score, zone)
         open_set: List[Tuple[int, int, Zone]] = []
 
         counter = 0
-        heapq.heappush(open_set, (0, counter, start))
 
-        # Cost from start to each zone
+        heapq.heappush(
+            open_set,
+            (0, counter, start)
+        )
+
         g_score: Dict[Zone, int] = {
             start: 0
         }
 
-        # Allows us to reconstruct the final path
         came_from: Dict[Zone, Zone] = {}
 
         while open_set:
@@ -48,19 +60,36 @@ class Pathfinding:
             _, _, current = heapq.heappop(open_set)
 
             if current == goal:
-                return self.reconstruct_path(came_from, current)
+                return self.reconstruct_path(
+                    came_from,
+                    current
+                )
 
             for neighbor in self.graph.adjacency_list[current]:
 
-                # Moving from one zone to another costs 1
-                tentative_g_score = g_score[current] + 1
+                # Blocked zones cannot be used.
+                if neighbor.zone_type == "blocked":
+                    continue
+
+                movement_cost = self.movement_cost(
+                    neighbor
+                )
+
+                tentative_g_score = (
+                    g_score[current]
+                    + movement_cost
+                )
 
                 if (
                     neighbor not in g_score
                     or tentative_g_score < g_score[neighbor]
                 ):
+
                     came_from[neighbor] = current
-                    g_score[neighbor] = tentative_g_score
+
+                    g_score[neighbor] = (
+                        tentative_g_score
+                    )
 
                     f_score = (
                         tentative_g_score
@@ -68,9 +97,14 @@ class Pathfinding:
                     )
 
                     counter += 1
+
                     heapq.heappush(
                         open_set,
-                        (f_score, counter, neighbor)
+                        (
+                            f_score,
+                            counter,
+                            neighbor
+                        )
                     )
 
         return []
@@ -84,7 +118,9 @@ class Pathfinding:
         path = [current]
 
         while current in came_from:
+
             current = came_from[current]
+
             path.append(current)
 
         path.reverse()
