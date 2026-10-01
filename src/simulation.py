@@ -21,6 +21,9 @@ class Simulation:
 
     def initialize_drones(self) -> None:
 
+        if self.drones:
+            return
+
         start = self.graph.start_zone
 
         if start is None:
