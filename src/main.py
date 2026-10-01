@@ -6,12 +6,14 @@ from .visualizer import Visualizer
 from .pathfinding import Pathfinding
 from .exceptions import ParsingError
 
+
 def valid_arg() -> str:
     if len(sys.argv) == 2:
         return sys.argv[1]
 
     print("Usage: make run MAP=<map_file>")
     sys.exit(1)
+
 
 def main() -> None:
     file_map = valid_arg()
@@ -23,6 +25,7 @@ def main() -> None:
 
         print("\n====================== INFO =========================")
         print(f"Total Drones : {parser.nb_drones}")
+        print(f"Total conection: {len(parser.connections)}")
         print(f"Start Zone   : {graph.start_zone.name}")
         print(f"End Zone     : {graph.end_zone.name}")
         print("=======================================================")
@@ -46,7 +49,6 @@ def main() -> None:
 
         visualizer.run()
 
-
         if not path:
             print("No path found.")
             return
@@ -60,9 +62,8 @@ def main() -> None:
 
         print("====================================================")
 
-
     except ParsingError as ex:
-        print(f"[ERROR]: {ex}")
+        print(f"[ERROR]: {ex} --> Usage: make run MAP=<map_file>")
 
 
 if __name__ == "__main__":

@@ -2,7 +2,6 @@ import pygame
 import math
 from .graph import Graph
 from .simulation import Simulation
-from typing import Any
 
 
 class Visualizer:
@@ -128,7 +127,7 @@ class Visualizer:
                 23
             )
 
-    def resolve_color(self, color_name: str) -> tuple[int, int ,int]:
+    def resolve_color(self, color_name: str) -> tuple[int, int, int]:
         try:
             c = pygame.Color(color_name)
             return (c.r, c.g, c.b)
@@ -141,7 +140,7 @@ class Visualizer:
         for zone in self.graph.zones.values():
 
             drones = zone.drones
-    
+
             if not drones:
                 continue
 
@@ -150,7 +149,7 @@ class Visualizer:
             total = len(drones)
 
             for index, drone in enumerate(drones):
-                angle = 2 * math.pi *index / total
+                angle = 2 * math.pi * index / total
                 radius = 35
                 x = int(center_x + math.cos(angle) * radius)
                 y = int(center_y + math.sin(angle) * radius)

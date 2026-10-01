@@ -2,8 +2,10 @@
 class ParsingError(Exception):
     ...
 
+
 class FileError(Exception):
     ...
+
 
 class GrahpError(Exception):
     ...

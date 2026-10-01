@@ -5,7 +5,7 @@ from typing import List, Dict
 
 class Graph:
     def __init__(self) -> None:
-        self.start_zone: Zone | None= None
+        self.start_zone: Zone | None = None
         self.end_zone: Zone | None = None
         self.zones: Dict[str, Zone] = {}
         self.connections: List[Connection] = []
@@ -23,5 +23,3 @@ class Graph:
 
         self.adjacency_list[zone1].append(zone2)
         self.adjacency_list[zone2].append(zone1)
-        
-        

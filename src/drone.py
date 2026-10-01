@@ -1,7 +1,6 @@
 from typing import List, Any
 
 
-
 class Drone:
 
     def __init__(
@@ -26,5 +25,4 @@ class Drone:
         return True
 
     def finished(self) -> bool:
-
         return self.current_point >= len(self.path) - 1

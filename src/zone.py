@@ -19,5 +19,3 @@ class Zone:
         self.zone_type = zone_type
 
         self.drones: List[Drone] = []
-
-    

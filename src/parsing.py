@@ -1,7 +1,7 @@
 from .graph import Graph
 from .zone import Zone
 from .connection import Connection
-from .exceptions import ParsingError
+from .exceptions import ParsingError, FileError
 from typing import Dict, Set, Tuple, FrozenSet
 
 
@@ -19,9 +19,9 @@ class Parser:
             with open(self.file_map, "r") as f:
                 lines = f.readlines()
         except FileNotFoundError:
-            raise ParsingError("Not find File.")
+            raise FileError("Not find File.")
         except PermissionError:
-            raise ParsingError("You do not have permission to read this File.")
+            raise FileError("You do not have permission to read this File.")
 
         if not lines:
             raise ParsingError("The file is empty.")
@@ -83,7 +83,6 @@ class Parser:
         if not end_zone_exist:
             raise ParsingError("end_hub is missing.")
 
-
     def valid_nb_drones(self, line: str) -> None:
         aux = line.split(":", 1)
 
@@ -93,7 +92,7 @@ class Parser:
             nb_drones = int(aux[1].strip())
         except ValueError:
             raise ParsingError("Invalid nb_drones.")
-        
+
         if nb_drones <= 0:
             raise ParsingError("nb_drones must be a positive value.")
 
@@ -110,7 +109,7 @@ class Parser:
             is_end = line.lower().startswith("end_hub:")
 
         part = line.split(":", 1)
-    
+
         data = part[1].strip()
 
         metadata: Dict[str, str | int] = {}
@@ -139,7 +138,7 @@ class Parser:
 
         X, Y = self.valid_xy(element[1], element[2])
         if (X, Y) in self.coordinates:
-            raise ParsingError(f"Duplicate Coordinates ({X}, {Y})") 
+            raise ParsingError(f"Duplicate Coordinates ({X}, {Y})")
         self.coordinates.add((X, Y))
 
         result_max_drones = int(metadata.get("max_drones", 1))
@@ -154,7 +153,6 @@ class Parser:
         elif is_end:
             self.graph.end_zone = new_zone
 
-
     def valid_xy(self, x: str, y: str) -> Tuple[int, int]:
         try:
             X = int(x)
@@ -162,7 +160,6 @@ class Parser:
         except ValueError:
             raise ParsingError("Invalid Coordinates")
         return X, Y
-
 
     def valid_metadata(self, metadata: str) -> Dict[str, str | int]:
         metadata_result: Dict[str, str | int] = {}
@@ -201,12 +198,11 @@ class Parser:
 
         return metadata_result
 
-
     def valid_connection(self, line: str) -> None:
         elements = line.split(":")
 
         if len(elements) != 2:
-            raise ParsingError("Invalid connection data")  
+            raise ParsingError("Invalid connection data")
 
         data_capacity = 1
         elements[1].strip()
@@ -249,23 +245,22 @@ class Parser:
             raise ParsingError("Duplicate connection.")
 
         self.connections.add(connection)
-    
+
         data_connect = Connection(zone1, zone2, data_capacity)
         self.graph.add_connection(data_connect)
-
 
     def valid_metadata_connection(self, metadata: str) -> int:
 
         if not metadata:
             raise ParsingError("Metadata connection is empty.")
-    
+
         key, value = metadata.split("=", 1)
 
         if key == "max_link_capacity":
             try:
                 max_capacity = int(value)
                 if max_capacity < 1:
-                    raise ParsingError("Metada conection invalid, it must be positive.")
+                    raise ParsingError("Metada conection must be positive.")
             except ValueError:
                 raise ParsingError("Metadata conection invalid.")
         else:
