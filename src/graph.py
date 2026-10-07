@@ -21,13 +21,15 @@ class Graph:
         ] = {}
 
     def add_zone(self, zone: Zone) -> None:
+        # Realizamos un diccioanrio de "nombre de zona" -> Zona
         self.zones[zone.name] = zone
+        """
+        Inicializamos un diccionario que contiene
+        como valor una lista de zonas "Zona -> Lista de Zonas"
+        """
         self.adjacency_list[zone] = []
 
-    def add_connection(
-        self,
-        connection: Connection
-    ) -> None:
+    def add_connection(self, connection: Connection) -> None:
 
         self.connections.append(connection)
 

@@ -39,10 +39,7 @@ class Simulation:
 
             path = self.paths[i % len(self.paths)]
 
-            drone = Drone(
-                f"D{i + 1}",
-                path
-            )
+            drone = Drone(f"D{i + 1}", path)
 
             self.drones.append(drone)
 
@@ -131,17 +128,17 @@ class Simulation:
             if connection is None:
                 continue
 
-            if next_zone.zone_type == "restricted":
+            # if next_zone.zone_type == "restricted":
 
-                current.drones.remove(drone)
+            #     current.drones.remove(drone)
 
-                drone.in_transit = True
+            #     drone.in_transit = True
 
-                connection.drones_on_link += 1
+            #     connection.drones_on_link += 1
 
-                moved = True
+            #     moved = True
 
-                continue
+            #     continue
 
             current.drones.remove(drone)
 

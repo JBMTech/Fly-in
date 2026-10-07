@@ -28,7 +28,7 @@ class Pathfinding:
             return float("inf")
 
         if zone.zone_type == "restricted":
-            cost = 2.0
+            cost = 2.5
         elif zone.zone_type == "priority":
             cost = 0.5
         else:
@@ -38,10 +38,18 @@ class Pathfinding:
 
         return cost
 
+    def zone_turn_cost(self, zone: Zone) -> float:
+
+        if zone.zone_type == "blocked":
+            return float("inf")
+
+        if zone.zone_type == "restricted":
+            return 2.0
+
+        return 1.0
+
     def find_path(
-        self,
-        penalties: Dict[Zone, float] | None = None
-    ) -> List[Zone]:
+            self, penalties: Dict[Zone, float] | None = None) -> List[Zone]:
 
         if penalties is None:
             penalties = {}
@@ -119,10 +127,7 @@ class Pathfinding:
         return []
 
     def reconstruct_path(
-        self,
-        came_from: Dict[Zone, Zone],
-        current: Zone
-    ) -> List[Zone]:
+            self, came_from: Dict[Zone, Zone], current: Zone) -> List[Zone]:
 
         path = [current]
 
@@ -134,10 +139,7 @@ class Pathfinding:
 
         return path
 
-    def find_smart_paths(
-        self,
-        total_drones: int
-    ) -> List[List[Zone]]:
+    def find_smart_paths(self, total_drones: int) -> List[List[Zone]]:
 
         all_unique_paths: List[List[Zone]] = []
 
@@ -147,7 +149,7 @@ class Pathfinding:
 
         best_paths_combination: List[List[Zone]] = []
 
-        for _ in range(20):
+        for _ in range(10):
 
             new_path = self.find_path(
                 zone_penalties
@@ -164,7 +166,7 @@ class Pathfinding:
                 ):
                     zone_penalties[zone] = (
                         zone_penalties.get(zone, 0.0)
-                        + 0.01
+                        + 0.1
                     )
 
             if new_path not in all_unique_paths:
@@ -199,7 +201,8 @@ class Pathfinding:
             return float("inf")
 
         path_lengths = [
-            len(path) - 1
+            sum(self.zone_turn_cost(zone)
+                for zone in path[1:])
             for path in paths
         ]
 
