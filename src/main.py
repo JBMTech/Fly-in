@@ -1,4 +1,5 @@
 import sys
+
 from .parsing import Parser
 from .graph import Graph
 from .simulation import Simulation
@@ -32,15 +33,27 @@ def main() -> None:
 
         pathfinding = Pathfinding(graph)
 
-        path = pathfinding.find_path()
-
-        simulation = Simulation(
-            graph,
-            path,
+        paths = pathfinding.find_smart_paths(
             parser.nb_drones
         )
 
-        simulation.initialize_drones()
+        if not paths:
+            print("No path found.")
+            return
+
+        print("\n====================== PATHS =======================")
+
+        for index, path in enumerate(paths, start=1):
+            names = [zone.name for zone in path]
+            print(f"Path {index}: {' -> '.join(names)}")
+
+        print("====================================================")
+
+        simulation = Simulation(
+            graph,
+            paths,
+            parser.nb_drones
+        )
 
         visualizer = Visualizer(
             graph,
@@ -49,21 +62,11 @@ def main() -> None:
 
         visualizer.run()
 
-        if not path:
-            print("No path found.")
-            return
-
-        print("Path found:")
-
-        print("\n====================== PATH =======================")
-
-        for zone in path:
-            print(zone.name)
-
-        print("====================================================")
-
     except ParsingError as ex:
-        print(f"[ERROR]: {ex} --> Usage: make run MAP=<map_file>")
+        print(
+            f"[ERROR]: {ex} --> "
+            f"Usage: make run MAP=<map_file>"
+        )
 
 
 if __name__ == "__main__":

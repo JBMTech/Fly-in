@@ -12,6 +12,7 @@ class Drone:
         self.id = drone_id
         self.path = path
         self.current_point = 0
+        self.in_transit = False
 
     def current_zone(self) -> Any:
         return self.path[self.current_point]

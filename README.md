@@ -13,7 +13,13 @@ Dependiendo de si los repartidores se mueven de forma simultánea o planifican d
 
 * Enfoque A: A* con Búsqueda Cooperativa (CBS / Cooperative A*)
   https://www.datacamp.com/tutorial/a-star-algorithm
-  Cada repartidor calcula su ruta uno por uno utilizando una tabla de reservas de espacio-tiempo.
+
+  A*
+   ↓
+  genera varios caminos mediante penalizaciones
+    ↓
+  Simulation distribuye los drones y evita conflictos
+    Cada repartidor calcula su ruta uno por uno utilizando una tabla de reservas de espacio-tiempo.
   * El Repartidor 1 calcula su ruta óptima de A a B. El sistema reserva los nodos y turnos exactos que va a pisar.
   * El Repartidor 2 calcula su ruta, pero el algoritmo trata los nodos reservados por el Repartidor 1 en turnos específicos como obstáculos temporales.
   * Resultado: Ningún repartidor se bloquea con otro en el mismo punto y se distribuyen por las rutas alternativas de forma natural.
