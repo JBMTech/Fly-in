@@ -28,7 +28,7 @@ class Pathfinding:
             return float("inf")
 
         if zone.zone_type == "restricted":
-            cost = 2.5
+            cost = 2.0
         elif zone.zone_type == "priority":
             cost = 0.5
         else:
@@ -140,56 +140,60 @@ class Pathfinding:
         return path
 
     def find_smart_paths(self, total_drones: int) -> List[List[Zone]]:
+        if total_drones <= 0:
+            return []
 
-        all_unique_paths: List[List[Zone]] = []
+        candidates: List[List[Zone]] = []
+        penalties: Dict[Zone, float] = {}
 
-        zone_penalties: Dict[Zone, float] = {}
+        # Generate alternative paths using A*
+        for _ in range(50):
+            path = self.find_path(penalties)
 
-        best_turn_count = float("inf")
-
-        best_paths_combination: List[List[Zone]] = []
-
-        for _ in range(10):
-
-            new_path = self.find_path(
-                zone_penalties
-            )
-
-            if not new_path:
+            if not path:
                 break
 
-            for zone in new_path:
+            if path not in candidates:
+                candidates.append(path)
 
-                if (
-                    zone != self.graph.start_zone
-                    and zone != self.graph.end_zone
-                ):
-                    zone_penalties[zone] = (
-                        zone_penalties.get(zone, 0.0)
-                        + 0.1
-                    )
+            # Penalize intermediate zones to encourage alternatives
+            for zone in path[1:-1]:
+                penalties[zone] = penalties.get(zone, 0.0) + 2.0
 
-            if new_path not in all_unique_paths:
+        if not candidates:
+            return []
 
-                all_unique_paths.append(new_path)
+        # Rank paths by their original movement cost
+        def path_cost(path: List[Zone]) -> float:
+            return sum(
+                self.movement_cost(zone, {})
+                for zone in path[1:]
+            )
 
-                current_turns = self.calculate_turns(
-                    all_unique_paths,
-                    total_drones
-                )
+        candidates.sort(key=path_cost)
 
-                if current_turns < best_turn_count:
+        # Always keep the shortest path
+        selected = [candidates[0]]
 
-                    best_turn_count = current_turns
+        if len(candidates) == 1:
+            return selected
 
-                    best_paths_combination = list(
-                        all_unique_paths
-                    )
+        # Prefer a short second path with less zone overlap
+        first_path = set(candidates[0][1:-1])
 
-        if best_paths_combination:
-            return best_paths_combination
+        alternatives = candidates[1:]
 
-        return all_unique_paths
+        second_path = min(
+            alternatives,
+            key=lambda path: (
+                len(first_path.intersection(path[1:-1])),
+                path_cost(path)
+            )
+        )
+
+        selected.append(second_path)
+
+        return selected
 
     def calculate_turns(
         self,

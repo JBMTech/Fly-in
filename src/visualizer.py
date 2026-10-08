@@ -1,10 +1,13 @@
+
 import pygame
 import math
+
 from .graph import Graph
 from .simulation import Simulation
 
 
 class Visualizer:
+    """Display the graph and navigate through simulation history."""
 
     def __init__(
         self,
@@ -22,11 +25,21 @@ class Visualizer:
 
         self.clock = pygame.time.Clock()
 
-        self.scale = 1
+        self.scale = 1.0
         self.offset_x = 0
         self.offset_y = 0
 
-        self.font = pygame.font.Font(None, 36)
+        self.font = pygame.font.Font(None, 30)
+        self.small_font = pygame.font.Font(None, 22)
+        self.title_font = pygame.font.Font(None, 38)
+
+        # Index of the snapshot currently displayed.
+        self.history_index = 0
+
+        # Automatic playback.
+        self.playing = False
+        self.playback_delay = 500
+        self.playback_timer = 0
 
         self.calculate_transform()
 
@@ -43,38 +56,28 @@ class Visualizer:
         min_y = min(zone.y for zone in zones)
         max_y = max(zone.y for zone in zones)
 
-        graph_width = max_x - min_x
-        graph_height = max_y - min_y
+        # Prevent division by zero for single-row/column graphs.
+        graph_width = max(max_x - min_x, 1)
+        graph_height = max(max_y - min_y, 1)
 
         screen_width, screen_height = self.screen.get_size()
 
-        margin = 100
+        margin = 120
 
         available_width = screen_width - 2 * margin
         available_height = screen_height - 2 * margin
 
-        scale_x = (
-            available_width / graph_width
-            if graph_width > 0
-            else float("inf")
-        )
-
-        scale_y = (
+        self.scale = min(
+            available_width / graph_width,
             available_height / graph_height
-            if graph_height > 0
-            else float("inf")
         )
-
-        self.scale = min(scale_x, scale_y)
 
         self.offset_x = (
-            screen_width
-            - graph_width * self.scale
+            screen_width - graph_width * self.scale
         ) / 2 - min_x * self.scale
 
         self.offset_y = (
-            screen_height
-            - graph_height * self.scale
+            screen_height - graph_height * self.scale
         ) / 2 - min_y * self.scale
 
     def screen_position(self, zone):
@@ -84,18 +87,41 @@ class Visualizer:
 
         return int(x), int(y)
 
+    def current_snapshot(self):
+        """Return the snapshot selected by the history index."""
+
+        if not self.simulation.history:
+            return {}, {}, {}, {}
+
+        self.history_index = max(
+            0,
+            min(
+                self.history_index,
+                len(self.simulation.history) - 1
+            )
+        )
+
+        return self.simulation.history[self.history_index]
+
     def draw(self) -> None:
 
         self.screen.fill((30, 30, 30))
 
-        self.draw_connections()
-        self.draw_zones()
-        self.draw_drones()
+        snapshot = self.current_snapshot()
+
+        drones_by_zone, drones_on_links, zone_counts, link_counts = (
+            snapshot
+        )
+
+        self.draw_connections(link_counts)
+        self.draw_zones(zone_counts)
+        self.draw_drones(drones_by_zone, drones_on_links)
         self.draw_turn()
+        self.draw_controls()
 
         pygame.display.flip()
 
-    def draw_connections(self) -> None:
+    def draw_connections(self, link_counts) -> None:
 
         for connection in self.graph.connections:
 
@@ -113,7 +139,30 @@ class Visualizer:
                 5
             )
 
-    def draw_zones(self) -> None:
+            # Display connection usage.
+            count = link_counts.get(
+                (connection.zone1, connection.zone2),
+                link_counts.get(
+                    (connection.zone2, connection.zone1),
+                    0
+                )
+            )
+
+            mid_x = (pos1[0] + pos2[0]) // 2
+            mid_y = (pos1[1] + pos2[1]) // 2
+
+            label = self.small_font.render(
+                f"{count}/{connection.capacity}",
+                True,
+                (210, 210, 210)
+            )
+
+            self.screen.blit(
+                label,
+                (mid_x + 5, mid_y - 20)
+            )
+
+    def draw_zones(self, zone_counts) -> None:
 
         for zone in self.graph.zones.values():
 
@@ -127,53 +176,208 @@ class Visualizer:
                 23
             )
 
+            # Zone name.
+            name = self.font.render(
+                zone.name,
+                True,
+                (255, 255, 255)
+            )
+
+            self.screen.blit(
+                name,
+                (
+                    position[0] - name.get_width() // 2,
+                    position[1] - 48
+                )
+            )
+
+            # Occupancy / capacity.
+            count = zone_counts.get(zone.name, 0)
+
+            capacity_text = self.small_font.render(
+                f"{count}/{zone.max_drones}",
+                True,
+                (255, 255, 255)
+            )
+
+            self.screen.blit(
+                capacity_text,
+                (
+                    position[0] - capacity_text.get_width() // 2,
+                    position[1] + 29
+                )
+            )
+
     def resolve_color(self, color_name: str) -> tuple[int, int, int]:
+
         try:
-            c = pygame.Color(color_name)
-            return (c.r, c.g, c.b)
-        except ValueError:
-            # if the color name dosen't exist return a default color
-            return (200, 200, 200)
+            color = pygame.Color(color_name)
+            return color.r, color.g, color.b
 
-    def draw_drones(self) -> None:
+        except (ValueError, TypeError):
+            return 200, 200, 200
 
-        for zone in self.graph.zones.values():
+    
+    def draw_drones(
+        self,
+        drones_by_zone,
+        drones_on_links
+    ) -> None:
+        """Draw drones with their IDs inside their circles."""
 
-            drones = zone.drones
+        def draw_drone(drone_id, x, y, color):
+            radius = 13
 
-            if not drones:
+            pygame.draw.circle(
+                self.screen,
+                color,
+                (x, y),
+                radius
+            )
+
+            label = self.small_font.render(
+                drone_id,
+                True,
+                (20, 20, 20)
+            )
+
+            label_rect = label.get_rect(center=(x, y))
+            self.screen.blit(label, label_rect)
+
+        # Drones inside zones.
+        for zone_name, drone_ids in drones_by_zone.items():
+            zone = self.graph.zones.get(zone_name)
+
+            if zone is None:
                 continue
 
             center_x, center_y = self.screen_position(zone)
+            total = len(drone_ids)
 
-            total = len(drones)
-
-            for index, drone in enumerate(drones):
-                angle = 2 * math.pi * index / total
+            for index, drone_id in enumerate(drone_ids):
+                angle = 2 * math.pi * index / max(total, 1)
                 radius = 35
+
                 x = int(center_x + math.cos(angle) * radius)
                 y = int(center_y + math.sin(angle) * radius)
 
-                pygame.draw.circle(
-                    self.screen,
-                    (255, 250, 250),
-                    (x, y),
-                    7
+                draw_drone(
+                    drone_id,
+                    x,
+                    y,
+                    (255, 250, 250)
+                )
+
+        # Drones travelling along connections.
+        for (zone1_name, zone2_name), drone_ids in drones_on_links.items():
+            zone1 = self.graph.zones.get(zone1_name)
+            zone2 = self.graph.zones.get(zone2_name)
+
+            if zone1 is None or zone2 is None:
+                continue
+
+            x1, y1 = self.screen_position(zone1)
+            x2, y2 = self.screen_position(zone2)
+
+            total = len(drone_ids)
+
+            for index, drone_id in enumerate(drone_ids):
+                fraction = (index + 1) / (total + 1)
+
+                x = int(x1 + (x2 - x1) * fraction)
+                y = int(y1 + (y2 - y1) * fraction)
+
+                draw_drone(
+                    drone_id,
+                    x,
+                    y,
+                    (255, 190, 60)
                 )
 
     def draw_turn(self) -> None:
 
-        text = self.font.render(
-            f"Turn: {self.simulation.turn}",
+        total_turns = max(
+            len(self.simulation.history) - 1,
+            0
+        )
+
+        text = self.title_font.render(
+            f"Turn: {self.history_index} / {total_turns}",
             True,
             (255, 255, 255)
         )
 
-        self.screen.blit(text, (30, 30))
+        self.screen.blit(text, (30, 25))
+
+        status = "PLAYING" if self.playing else "PAUSED"
+
+        status_text = self.font.render(
+            status,
+            True,
+            (100, 230, 150) if self.playing else (220, 220, 220)
+        )
+
+        self.screen.blit(status_text, (30, 70))
+
+    def draw_controls(self) -> None:
+
+        _, height = self.screen.get_size()
+
+        controls = (
+            "LEFT: Previous turn   "
+            "RIGHT: Next turn   "
+            "SPACE: Play/Pause   "
+            "HOME: First turn   "
+            "END: Last recorded turn"
+        )
+
+        text = self.small_font.render(
+            controls,
+            True,
+            (190, 190, 190)
+        )
+
+        self.screen.blit(
+            text,
+            (30, height - 35)
+        )
+
+    def next_turn(self) -> None:
+        """Advance through history or calculate the next turn."""
+
+        if self.history_index < len(self.simulation.history) - 1:
+            self.history_index += 1
+
+        elif not self.simulation.all_finished():
+            moved = self.simulation.simulate_turn()
+
+            if moved:
+                self.history_index = len(
+                    self.simulation.history
+                ) - 1
+            else:
+                self.playing = False
+
+        else:
+            self.playing = False
+
+    def previous_turn(self) -> None:
+
+        self.history_index = max(
+            0,
+            self.history_index - 1
+        )
 
     def run(self) -> None:
 
-        self.simulation.initialize_drones()
+        # Ensure the initial snapshot exists.
+        if not self.simulation.history:
+            self.simulation.initialize_drones()
+            self.simulation.history.append(
+                self.simulation.capture_snapshot()
+            )
+
+        self.history_index = 0
 
         running = True
 
@@ -187,12 +391,34 @@ class Visualizer:
                 elif event.type == pygame.KEYDOWN:
 
                     if event.key == pygame.K_RIGHT:
+                        self.next_turn()
 
-                        if not self.simulation.all_finished():
-                            self.simulation.simulate_turn()
+                    elif event.key == pygame.K_LEFT:
+                        self.playing = False
+                        self.previous_turn()
+
+                    elif event.key == pygame.K_SPACE:
+                        self.playing = not self.playing
+
+                    elif event.key == pygame.K_HOME:
+                        self.playing = False
+                        self.history_index = 0
+
+                    elif event.key == pygame.K_END:
+                        self.playing = False
+                        self.history_index = (
+                            len(self.simulation.history) - 1
+                        )
+
+            # Automatic playback.
+            if self.playing:
+                self.playback_timer += self.clock.get_time()
+
+                if self.playback_timer >= self.playback_delay:
+                    self.next_turn()
+                    self.playback_timer = 0
 
             self.draw()
-
             self.clock.tick(60)
 
         pygame.quit()
