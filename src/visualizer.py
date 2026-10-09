@@ -43,6 +43,14 @@ class Visualizer:
         self.playback_timer = 0
         self.message_turn = False
 
+        # Smooth movement between consecutive snapshots.
+        self.animation_duration = 500.0  # milliseconds
+        self.animation_elapsed = self.animation_duration
+        self.animating = False
+
+        self.animation_start_positions = {}
+        self.animation_end_positions = {}
+
         self.calculate_transform()
 
     def calculate_transform(self) -> None:
@@ -117,7 +125,8 @@ class Visualizer:
 
         self.draw_connections(link_counts)
         self.draw_zones(zone_counts)
-        self.draw_drones(drones_by_zone, drones_on_links)
+        positions = self.get_animated_positions()
+        self.draw_drones(positions)
         self.draw_turn()
         self.draw_controls()
 
@@ -219,19 +228,15 @@ class Visualizer:
         except (ValueError, TypeError):
             return 200, 200, 200
 
-    def draw_drones(
-        self,
-        drones_by_zone,
-        drones_on_links
-    ) -> None:
-        """Draw drones with their IDs inside their circles."""
+    def draw_drones(self, positions) -> None:
+        """Draw drones at their interpolated pixel positions."""
 
-        def draw_drone(drone_id, x, y, color):
+        for drone_id, (x, y) in positions.items():
             radius = 13
 
             pygame.draw.circle(
                 self.screen,
-                color,
+                (255, 190, 60),
                 (x, y),
                 radius
             )
@@ -244,56 +249,6 @@ class Visualizer:
 
             label_rect = label.get_rect(center=(x, y))
             self.screen.blit(label, label_rect)
-
-        # Drones inside zones.
-        for zone_name, drone_ids in drones_by_zone.items():
-            zone = self.graph.zones.get(zone_name)
-
-            if zone is None:
-                continue
-
-            center_x, center_y = self.screen_position(zone)
-            total = len(drone_ids)
-
-            for index, drone_id in enumerate(drone_ids):
-                angle = 2 * math.pi * index / max(total, 1)
-                radius = 35
-
-                x = int(center_x + math.cos(angle) * radius)
-                y = int(center_y + math.sin(angle) * radius)
-
-                draw_drone(
-                    drone_id,
-                    x,
-                    y,
-                    (255, 250, 250)
-                )
-
-        # Drones travelling along connections.
-        for (zone1_name, zone2_name), drone_ids in drones_on_links.items():
-            zone1 = self.graph.zones.get(zone1_name)
-            zone2 = self.graph.zones.get(zone2_name)
-
-            if zone1 is None or zone2 is None:
-                continue
-
-            x1, y1 = self.screen_position(zone1)
-            x2, y2 = self.screen_position(zone2)
-
-            total = len(drone_ids)
-
-            for index, drone_id in enumerate(drone_ids):
-                fraction = (index + 1) / (total + 1)
-
-                x = int(x1 + (x2 - x1) * fraction)
-                y = int(y1 + (y2 - y1) * fraction)
-
-                draw_drone(
-                    drone_id,
-                    x,
-                    y,
-                    (255, 190, 60)
-                )
 
     def draw_turn(self) -> None:
 
@@ -345,22 +300,33 @@ class Visualizer:
         )
 
     def next_turn(self) -> None:
-        """Advance through history or calculate the next turn."""
+        """Advance one turn and animate the movement."""
 
-        # Navigate throught already recorded history
-        if self.history_index < len(self.simulation.history) - 1:
-            self.history_index += 1
+        if self.animating:
             return
 
-        # Calculate the next turn
-        moved = self.simulation.simulate_turn()
+        old_positions = self.get_drone_positions(
+            self.current_snapshot()
+        )
+        old_index = self.history_index
 
-        if moved:
-            self.history_index = len(
-                self.simulation.history
-            ) - 1
+        # Navigate through recorded history first.
+        if self.history_index < len(self.simulation.history) - 1:
+            self.history_index += 1
+
         else:
-            self.playing = False
+            # Calculate the next simulation turn.
+            moved = self.simulation.simulate_turn()
+
+            if not moved:
+                self.playing = False
+                return
+
+            self.history_index = len(self.simulation.history) - 1
+
+        # Animate only if the displayed state changed.
+        if self.history_index != old_index:
+            self.start_transition(old_positions)
 
         # Report completion only once.
         if (
@@ -371,15 +337,23 @@ class Visualizer:
                 f"\nSimulation finished in "
                 f"{self.simulation.turn} turns."
             )
+
             self.message_turn = True
             self.playing = False
 
     def previous_turn(self) -> None:
+        """Go back one turn and animate backwards."""
 
-        self.history_index = max(
-            0,
-            self.history_index - 1
+        if self.animating or self.history_index <= 0:
+            return
+
+        old_positions = self.get_drone_positions(
+            self.current_snapshot()
         )
+
+        self.history_index -= 1
+
+        self.start_transition(old_positions)
 
     def run(self) -> None:
 
@@ -395,6 +369,8 @@ class Visualizer:
         running = True
 
         while running:
+            # Time elapsed since the previous frame.
+            dt = self.clock.tick(60)
 
             for event in pygame.event.get():
 
@@ -415,29 +391,149 @@ class Visualizer:
 
                     elif event.key == pygame.K_UP:
                         self.playing = False
-                        self.history_index = 0
+                        if not self.animating:
+                            old_positions = self.get_drone_positions(
+                                self.current_snapshot()
+                            )
+                            self.history_index = 0
+                            self.start_transition(old_positions)
 
                     elif event.key == pygame.K_DOWN:
                         self.playing = False
-                        self.history_index = (
-                            len(self.simulation.history) - 1
-                        )
+                        if not self.animating:
+                            old_positions = self.get_drone_positions(
+                                self.current_snapshot()
+                            )
+                            self.history_index = (
+                                len(self.simulation.history) - 1
+                            )
+                            self.start_transition(old_positions)
+
                     elif event.key == pygame.K_q:
-                        if self.simulation.all_finished():
-                            if self.message_turn:
-                                pygame.event.post(
-                                    pygame.event.Event(pygame.QUIT))
-                                return
+                        running = False
+
+            # Update the animation.
+            if self.animating:
+                self.animation_elapsed += dt
+
+                if self.animation_elapsed >= self.animation_duration:
+                    self.animation_elapsed = self.animation_duration
+                    self.animating = False
 
             # Automatic playback.
-            if self.playing:
-                self.playback_timer += self.clock.get_time()
+            if self.playing and not self.animating:
+                self.playback_timer += dt
 
                 if self.playback_timer >= self.playback_delay:
                     self.next_turn()
                     self.playback_timer = 0
 
             self.draw()
-            self.clock.tick(60)
 
         pygame.quit()
+
+    def get_drone_positions(self, snapshot):
+        """Calculate pixel positions for every drone in a snapshot."""
+
+        drones_by_zone, drones_on_links, _, _ = snapshot
+        positions = {}
+
+        # Drones inside zones.
+        for zone_name, drone_ids in drones_by_zone.items():
+            zone = self.graph.zones.get(zone_name)
+
+            if zone is None:
+                continue
+
+            cx, cy = self.screen_position(zone)
+            total = len(drone_ids)
+
+            for index, drone_id in enumerate(drone_ids):
+                angle = 2 * math.pi * index / max(total, 1)
+                radius = 35
+
+                positions[drone_id] = (
+                    int(cx + math.cos(angle) * radius),
+                    int(cy + math.sin(angle) * radius)
+                )
+
+        # Drones travelling along connections.
+        for (zone1_name, zone2_name), drone_ids in drones_on_links.items():
+            zone1 = self.graph.zones.get(zone1_name)
+            zone2 = self.graph.zones.get(zone2_name)
+
+            if zone1 is None or zone2 is None:
+                continue
+
+            x1, y1 = self.screen_position(zone1)
+            x2, y2 = self.screen_position(zone2)
+
+            total = len(drone_ids)
+
+            for index, drone_id in enumerate(drone_ids):
+                fraction = (index + 1) / (total + 1)
+
+                positions[drone_id] = (
+                    int(x1 + (x2 - x1) * fraction),
+                    int(y1 + (y2 - y1) * fraction)
+                )
+
+        return positions
+
+    def start_transition(self, start_positions):
+        """Animate drones from one snapshot to another."""
+
+        end_positions = self.get_drone_positions(
+            self.current_snapshot()
+        )
+
+        # Include all drones present in either snapshot.
+        all_ids = set(start_positions) | set(end_positions)
+
+        self.animation_start_positions = {}
+        self.animation_end_positions = {}
+
+        for drone_id in all_ids:
+            start = start_positions.get(
+                drone_id,
+                end_positions.get(drone_id, (0, 0))
+            )
+
+            end = end_positions.get(
+                drone_id,
+                start
+            )
+
+            self.animation_start_positions[drone_id] = start
+            self.animation_end_positions[drone_id] = end
+
+        self.animation_elapsed = 0.0
+        self.animating = True
+
+    def get_animated_positions(self):
+        """Interpolate drone positions during a transition."""
+
+        if not self.animating:
+            return self.get_drone_positions(
+                self.current_snapshot()
+            )
+
+        t = min(
+            self.animation_elapsed / self.animation_duration,
+            1.0
+        )
+
+        # Smooth acceleration and deceleration.
+        t = t * t * (3 - 2 * t)
+
+        positions = {}
+
+        for drone_id, (x0, y0) in self.animation_start_positions.items():
+            x1, y1 = self.animation_end_positions[drone_id]
+
+            x = x0 + (x1 - x0) * t
+            y = y0 + (y1 - y0) * t
+
+            positions[drone_id] = (round(x), round(y))
+
+        return positions
