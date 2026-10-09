@@ -20,7 +20,8 @@ class Visualizer:
 
         pygame.init()
 
-        self.screen = pygame.display.set_mode((1900, 1000))
+        # 1900, 1000
+        self.screen = pygame.display.set_mode((2800, 1200))
         pygame.display.set_caption("Fly-in")
 
         self.clock = pygame.time.Clock()
@@ -40,6 +41,7 @@ class Visualizer:
         self.playing = False
         self.playback_delay = 500
         self.playback_timer = 0
+        self.message_turn = False
 
         self.calculate_transform()
 
@@ -217,7 +219,6 @@ class Visualizer:
         except (ValueError, TypeError):
             return 200, 200, 200
 
-    
     def draw_drones(
         self,
         drones_by_zone,
@@ -327,8 +328,9 @@ class Visualizer:
             "LEFT: Previous turn   "
             "RIGHT: Next turn   "
             "SPACE: Play/Pause   "
-            "HOME: First turn   "
-            "END: Last recorded turn"
+            "UP: First turn   "
+            "DOWN: Last recorded turn   "
+            "Q: Exit"
         )
 
         text = self.small_font.render(
@@ -345,20 +347,31 @@ class Visualizer:
     def next_turn(self) -> None:
         """Advance through history or calculate the next turn."""
 
+        # Navigate throught already recorded history
         if self.history_index < len(self.simulation.history) - 1:
             self.history_index += 1
+            return
 
-        elif not self.simulation.all_finished():
-            moved = self.simulation.simulate_turn()
+        # Calculate the next turn
+        moved = self.simulation.simulate_turn()
 
-            if moved:
-                self.history_index = len(
-                    self.simulation.history
-                ) - 1
-            else:
-                self.playing = False
-
+        if moved:
+            self.history_index = len(
+                self.simulation.history
+            ) - 1
         else:
+            self.playing = False
+
+        # Report completion only once.
+        if (
+            self.simulation.all_finished()
+            and not self.message_turn
+        ):
+            print(
+                f"\nSimulation finished in "
+                f"{self.simulation.turn} turns."
+            )
+            self.message_turn = True
             self.playing = False
 
     def previous_turn(self) -> None:
@@ -400,15 +413,21 @@ class Visualizer:
                     elif event.key == pygame.K_SPACE:
                         self.playing = not self.playing
 
-                    elif event.key == pygame.K_HOME:
+                    elif event.key == pygame.K_UP:
                         self.playing = False
                         self.history_index = 0
 
-                    elif event.key == pygame.K_END:
+                    elif event.key == pygame.K_DOWN:
                         self.playing = False
                         self.history_index = (
                             len(self.simulation.history) - 1
                         )
+                    elif event.key == pygame.K_q:
+                        if self.simulation.all_finished():
+                            if self.message_turn:
+                                pygame.event.post(
+                                    pygame.event.Event(pygame.QUIT))
+                                return
 
             # Automatic playback.
             if self.playing:

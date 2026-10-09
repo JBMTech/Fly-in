@@ -1,6 +1,5 @@
 
-from typing import List, Dict, Tuple, Set, Any
-
+from typing import List, Dict, Tuple, Set
 from .graph import Graph
 from .drone import Drone
 from .zone import Zone
@@ -278,19 +277,3 @@ class Simulation:
             drone.finished()
             for drone in self.drones
         )
-
-    def run(self) -> None:
-        """Run the simulation until completion or a deadlock."""
-
-        while not self.all_finished():
-
-            moved = self.simulate_turn()
-
-            if not moved:
-                print(
-                    "Simulation stopped: "
-                    "no drones can move."
-                )
-                break
-
-        print(f"Simulation finished in {self.turn} turns.")

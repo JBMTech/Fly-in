@@ -24,12 +24,12 @@ def main() -> None:
         parser.parsing()
         graph: Graph = parser.graph
 
-        print("\n====================== INFO =========================")
+        print("\n==================== INFO ========================")
         print(f"Total Drones : {parser.nb_drones}")
         print(f"Total conection: {len(parser.connections)}")
         print(f"Start Zone   : {graph.start_zone.name}")
         print(f"End Zone     : {graph.end_zone.name}")
-        print("=======================================================")
+        print("====================================================")
 
         pathfinding = Pathfinding(graph)
 
@@ -60,7 +60,11 @@ def main() -> None:
             simulation
         )
 
+        print("\n================ SIMULATION ========================")
+
         visualizer.run()
+
+        print("====================================================")
 
     except ParsingError as ex:
         print(
