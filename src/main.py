@@ -68,7 +68,7 @@ def main() -> None:
 
     except ParsingError as ex:
         print(
-            f"[ERROR]: {ex} --> "
+            f"[ERROR] {ex} --> "
             f"Usage: make run MAP=<map_file>"
         )
 

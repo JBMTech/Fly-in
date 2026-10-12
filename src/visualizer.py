@@ -3,7 +3,9 @@ import pygame
 import math
 
 from .graph import Graph
-from .simulation import Simulation
+from .zone import Zone
+from .simulation import Simulation, Snapshot
+from typing import Dict, Tuple, Any
 
 
 class Visualizer:
@@ -27,8 +29,8 @@ class Visualizer:
         self.clock = pygame.time.Clock()
 
         self.scale = 1.0
-        self.offset_x = 0
-        self.offset_y = 0
+        self.offset_x = 0.0
+        self.offset_y = 0.0
 
         self.font = pygame.font.Font(None, 30)
         self.small_font = pygame.font.Font(None, 22)
@@ -48,8 +50,8 @@ class Visualizer:
         self.animation_elapsed = self.animation_duration
         self.animating = False
 
-        self.animation_start_positions = {}
-        self.animation_end_positions = {}
+        self.animation_start_positions: Dict[Any, Any] = {}
+        self.animation_end_positions: Dict[Any, Any] = {}
 
         self.calculate_transform()
 
@@ -90,14 +92,14 @@ class Visualizer:
             screen_height - graph_height * self.scale
         ) / 2 - min_y * self.scale
 
-    def screen_position(self, zone):
+    def screen_position(self, zone: Zone) -> Tuple[int, int]:
 
         x = zone.x * self.scale + self.offset_x
         y = zone.y * self.scale + self.offset_y
 
         return int(x), int(y)
 
-    def current_snapshot(self):
+    def current_snapshot(self) -> Any:
         """Return the snapshot selected by the history index."""
 
         if not self.simulation.history:
@@ -132,7 +134,8 @@ class Visualizer:
 
         pygame.display.flip()
 
-    def draw_connections(self, link_counts) -> None:
+    def draw_connections(self,
+                         link_counts: Dict[Tuple[str, str], int]) -> None:
 
         for connection in self.graph.connections:
 
@@ -173,7 +176,7 @@ class Visualizer:
                 (mid_x + 5, mid_y - 20)
             )
 
-    def draw_zones(self, zone_counts) -> None:
+    def draw_zones(self, zone_counts: Dict[Any, Any]) -> None:
 
         for zone in self.graph.zones.values():
 
@@ -228,7 +231,7 @@ class Visualizer:
         except (ValueError, TypeError):
             return 200, 200, 200
 
-    def draw_drones(self, positions) -> None:
+    def draw_drones(self, positions: Dict[Any, Any]) -> None:
         """Draw drones at their interpolated pixel positions."""
 
         for drone_id, (x, y) in positions.items():
@@ -432,7 +435,7 @@ class Visualizer:
 
         pygame.quit()
 
-    def get_drone_positions(self, snapshot):
+    def get_drone_positions(self, snapshot: Snapshot) -> Dict[Any, Any]:
         """Calculate pixel positions for every drone in a snapshot."""
 
         drones_by_zone, drones_on_links, _, _ = snapshot
@@ -480,7 +483,7 @@ class Visualizer:
 
         return positions
 
-    def start_transition(self, start_positions):
+    def start_transition(self, start_positions: Dict[Any, Any]) -> None:
         """Animate drones from one snapshot to another."""
 
         end_positions = self.get_drone_positions(
@@ -510,7 +513,7 @@ class Visualizer:
         self.animation_elapsed = 0.0
         self.animating = True
 
-    def get_animated_positions(self):
+    def get_animated_positions(self) -> Dict[Any, Any]:
         """Interpolate drone positions during a transition."""
 
         if not self.animating:

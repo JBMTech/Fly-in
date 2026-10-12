@@ -1,13 +1,13 @@
 from .zone import Zone
 from .connection import Connection
-from typing import List, Dict
+from typing import List, Dict, Any
 
 
 class Graph:
 
     def __init__(self) -> None:
-        self.start_zone: Zone | None = None
-        self.end_zone: Zone | None = None
+        self.start_zone: Zone | Any = None
+        self.end_zone: Zone | Any = None
 
         self.zones: Dict[str, Zone] = {}
 
@@ -51,7 +51,7 @@ class Graph:
         self,
         zone1: str,
         zone2: str
-    ) -> Connection | None:
+    ) -> Connection | Any:
 
         return self.connection_maps.get(
             (zone1, zone2)
