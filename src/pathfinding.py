@@ -95,10 +95,7 @@ class Pathfinding:
                 if movement_cost == float("inf"):
                     continue
 
-                tentative_g_score = (
-                    g_score[current]
-                    + movement_cost
-                )
+                tentative_g_score = (g_score[current] + movement_cost)
 
                 if (
                     neighbor not in g_score
@@ -147,7 +144,7 @@ class Pathfinding:
         penalties: Dict[Zone, float] = {}
 
         # Generate alternative paths using A*
-        for _ in range(50):
+        for _ in range(20):
             path = self.find_path(penalties)
 
             if not path:
@@ -178,68 +175,8 @@ class Pathfinding:
         if len(candidates) == 1:
             return selected
 
-        # Prefer a short second path with less zone overlap
-        first_path = set(candidates[0][1:-1])
-
-        alternatives = candidates[1:]
-
-        second_path = min(
-            alternatives,
-            key=lambda path: (
-                len(first_path.intersection(path[1:-1])),
-                path_cost(path)
-            )
-        )
+        second_path = candidates[1]
 
         selected.append(second_path)
 
         return selected
-
-    def calculate_turns(
-        self,
-        paths: List[List[Zone]],
-        total_drones: int
-    ) -> float:
-
-        if not paths:
-            return float("inf")
-
-        path_lengths = [
-            sum(self.zone_turn_cost(zone)
-                for zone in path[1:])
-            for path in paths
-        ]
-
-        path_lengths.sort()
-
-        shortest_len = path_lengths[0]
-
-        number_of_paths = len(path_lengths)
-
-        diff_sum = sum(
-            length - shortest_len
-            for length in path_lengths
-        )
-
-        if total_drones > diff_sum:
-
-            drones_left = (
-                total_drones - diff_sum
-            )
-
-            turns = (
-                shortest_len
-                - 1
-                + diff_sum
-                + (
-                    drones_left
-                    + number_of_paths
-                    - 1
-                ) // number_of_paths
-            )
-
-            return float(turns)
-
-        return float(
-            shortest_len - 1 + total_drones
-        )

@@ -7,6 +7,9 @@ from .visualizer import Visualizer
 from .pathfinding import Pathfinding
 from .exceptions import ParsingError
 
+_RED = "\033[31m"
+_RESET = "\033[0m"
+
 
 def valid_arg() -> str:
     if len(sys.argv) == 2:
@@ -68,8 +71,7 @@ def main() -> None:
 
     except ParsingError as ex:
         print(
-            f"[ERROR] {ex} --> "
-            f"Usage: make run MAP=<map_file>"
+            f"{_RED}[ERROR]{_RESET} {ex}"
         )
 
 

@@ -117,7 +117,7 @@ class Parser:
         # Obtener información de los metadatos
         if "[" in data and "]" in data:
             if not ("[" in data and data.endswith("]")):
-                raise ParsingError("Invalid metadata.")
+                raise ParsingError("Invalid metadata")
 
             data_index = data.find("[")
             metadata_string = data[data_index + 1:-1]
@@ -179,7 +179,7 @@ class Parser:
 
             if key == "color":
                 if not value:
-                    raise ParsingError("Color cannot be empty.")
+                    raise ParsingError("Color cannot be empty")
                 metadata_result[key] = value
             elif key == "max_drones":
                 try:
