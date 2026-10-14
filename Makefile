@@ -6,6 +6,16 @@ install:
 run:
 		uv run python -m src.main $(MAP)
 
+help:
+	@echo "=================================================="
+	@echo "make install        install dependencies"
+	@echo "make run            run the simulation"
+	@echo "make debug          run under pdb"
+	@echo "make clean          remove caches"
+	@echo "make fclean         remove caches and simulation"
+	@echo "make lint           run flake8 + mypy"
+	@echo "=================================================="
+
 debug:
 		uv run python -m pdb -m src.main $(MAP)
 
