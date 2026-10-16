@@ -8,9 +8,11 @@ from .graph import Graph
 class Pathfinding:
 
     def __init__(self, graph: Graph) -> None:
+        """Initialize the pathfinding algorithm with the given graph."""
         self.graph = graph
 
     def heuristic(self, zone: Zone) -> float:
+        """Calculate the Manhattan distance from a zone to the goal zone."""
         goal = self.graph.end_zone
 
         if goal is None:
@@ -23,6 +25,10 @@ class Pathfinding:
         zone: Zone,
         penalties: Dict[Zone, float]
     ) -> float:
+        """
+        Calculate the movement cost of a zone, considering its type
+        and penalties.
+        """
 
         if zone.zone_type == "blocked":
             return float("inf")
@@ -39,6 +45,7 @@ class Pathfinding:
         return cost
 
     def zone_turn_cost(self, zone: Zone) -> float:
+        """Return the cost of turning in a zone based on its type."""
 
         if zone.zone_type == "blocked":
             return float("inf")
@@ -50,6 +57,10 @@ class Pathfinding:
 
     def find_path(
             self, penalties: Dict[Zone, float] | None = None) -> List[Zone]:
+        """
+        Find the lowest-cost path from the start zono
+        to the goal using A*.
+        """
 
         if penalties is None:
             penalties = {}
@@ -125,6 +136,7 @@ class Pathfinding:
 
     def reconstruct_path(
             self, came_from: Dict[Zone, Zone], current: Zone) -> List[Zone]:
+        """Reconstruct the path from the start zone to the current zone."""
 
         path = [current]
 
@@ -137,6 +149,10 @@ class Pathfinding:
         return path
 
     def find_smart_paths(self, total_drones: int) -> List[List[Zone]]:
+        """
+        Generate and rank alternative paths by penalizing
+        previously used zones.
+        """
         if total_drones <= 0:
             return []
 

@@ -7,6 +7,9 @@ from typing import Dict, Set, Tuple, FrozenSet
 
 class Parser:
     def __init__(self, file_map: str) -> None:
+        """
+        Initialize the parser with the input file path and an empty graph.
+        """
         self.file_map = file_map
         self.nb_drones = 0
         self.zone_names: Set[str] = set()
@@ -15,6 +18,10 @@ class Parser:
         self.graph = Graph()
 
     def parsing(self) -> None:
+        """
+        Read and parse the input file, validating its contents
+        and required elements.
+        """
         try:
             with open(self.file_map, "r") as f:
                 lines = f.readlines()
@@ -84,6 +91,9 @@ class Parser:
             raise ParsingError("end_hub is missing")
 
     def valid_nb_drones(self, line: str) -> None:
+        """
+        Validate the number of drones and store it if it is a positive integer.
+        """
         aux = line.split(":", 1)
 
         if len(aux) != 2:
@@ -99,6 +109,10 @@ class Parser:
         self.nb_drones = nb_drones
 
     def valid_zone(self, line: str) -> None:
+        """
+        Validate a zone definition, parse its metadata,
+        and add it to the graph.
+        """
 
         is_start = False
         is_end = False
@@ -154,6 +168,7 @@ class Parser:
             self.graph.end_zone = new_zone
 
     def valid_xy(self, x: str, y: str) -> Tuple[int, int]:
+        """Validate and convert the zone coordinates into integers."""
         try:
             X = int(x)
             Y = int(y)
@@ -162,6 +177,7 @@ class Parser:
         return X, Y
 
     def valid_metadata(self, metadata: str) -> Dict[str, str | int]:
+        """Validate zone metadata and return the parsed values."""
         metadata_result: Dict[str, str | int] = {}
         zone_allowed = ["normal", "restricted", "priority", "blocked"]
 
@@ -202,6 +218,10 @@ class Parser:
         return metadata_result
 
     def valid_connection(self, line: str) -> None:
+        """
+        Validate a connection between two existing zones
+        and add it to the graph.
+        """
         elements = line.split(":")
 
         if len(elements) != 2:
@@ -253,6 +273,9 @@ class Parser:
         self.graph.add_connection(data_connect)
 
     def valid_metadata_connection(self, metadata: str) -> int:
+        """
+        Validate connection metadata and return the maximum link capacity.
+        """
 
         if not metadata:
             raise ParsingError("Metadata connection is empty")

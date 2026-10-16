@@ -24,6 +24,7 @@ class Simulation:
         nb_drones: int,
         flag: bool = False
     ) -> None:
+        """Initialize the simulation and record the initial state."""
 
         self.graph = graph
         self.paths = paths
@@ -47,7 +48,10 @@ class Simulation:
         self.history.append(self.capture_snapshot())
 
     def initialize_drones(self) -> None:
-        """Place drones at the starting zone."""
+        """
+        Create drones and place them at the starting zone,
+        assigning each a path.
+        """
 
         if self.drones or not self.paths:
             return
@@ -68,7 +72,7 @@ class Simulation:
             start.drones.append(drone)
 
     def reserved_drones(self, zone: Zone) -> int:
-        """Count drones travelling to a zone but not yet inside it."""
+        """Count the drones travelling to a zone that have not arrived yet."""
 
         count = 0
 
@@ -84,7 +88,10 @@ class Simulation:
         return count
 
     def can_move(self, drone: Drone) -> bool:
-        """Check connection and destination capacity."""
+        """
+        Check whether a drone can move to the next zone
+        based on link and zone capacities.
+        """
 
         if drone.finished():
             return False
@@ -115,7 +122,10 @@ class Simulation:
         return True
 
     def capture_snapshot(self) -> Snapshot:
-        """Capture the positions and occupancy of all drones."""
+        """
+        Capture the current positions of drones and
+        the occupancy of zones and links.
+        """
 
         drones_by_zone: Dict[str, List[str]] = {}
         drones_on_links: Dict[Tuple[str, str], List[str]] = {}
@@ -169,7 +179,10 @@ class Simulation:
         )
 
     def simulate_turn(self) -> bool:
-        """Execute one turn and save its state."""
+        """
+        Execute one simulation turn, update drone movements,
+        and record the resulting state.
+        """
 
         for connection in self.graph.connections:
             connection.drones_on_link = 0
@@ -271,7 +284,7 @@ class Simulation:
         return True
 
     def all_finished(self) -> bool:
-        """Return True when every drone has arrived."""
+        """Check whether all drones have reached their destination."""
 
         return all(
             drone.finished()

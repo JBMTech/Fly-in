@@ -6,6 +6,10 @@ from typing import List, Dict, Any
 class Graph:
 
     def __init__(self) -> None:
+        """
+        Initialize an empty graph with zones, connections,
+        and adjacency mappings.
+        """
         self.start_zone: Zone | Any = None
         self.end_zone: Zone | Any = None
 
@@ -23,13 +27,14 @@ class Graph:
     def add_zone(self, zone: Zone) -> None:
         # Realizamos un diccioanrio de "nombre de zona" -> Zona
         self.zones[zone.name] = zone
-        """
-        Inicializamos un diccionario que contiene
-        como valor una lista de zonas "Zona -> Lista de Zonas"
-        """
+        """Add a zone to the graph and initialize its adjacency list."""
         self.adjacency_list[zone] = []
 
     def add_connection(self, connection: Connection) -> None:
+        """
+        Add a connection between two zones and
+        update the graph's adjacency mappings.
+        """
 
         self.connections.append(connection)
 
@@ -52,6 +57,10 @@ class Graph:
         zone1: str,
         zone2: str
     ) -> Connection | Any:
+        """
+        Return the connection between two zones,
+        or None if no connection exists.
+        """
 
         return self.connection_maps.get(
             (zone1, zone2)

@@ -6,6 +6,9 @@ class Connection:
         zone2: str,
         capacity: int
     ) -> None:
+        """
+        Initialize a connection between two zones with a maximum capacity.
+        """
 
         self.zone1 = zone1
         self.zone2 = zone2

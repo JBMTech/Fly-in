@@ -12,6 +12,7 @@ _RESET = "\033[0m"
 
 
 def valid_arg() -> str:
+    """Validate the command-line arguments and return the map file path."""
     if len(sys.argv) == 2:
         return sys.argv[1]
 
@@ -20,6 +21,10 @@ def valid_arg() -> str:
 
 
 def main() -> None:
+    """
+    Parse the map, find suitable paths, and
+    run the drone simulation with visualization.
+    """
     file_map = valid_arg()
     parser = Parser(file_map)
 

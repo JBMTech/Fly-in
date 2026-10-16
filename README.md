@@ -2,8 +2,6 @@
 
 # ✈️ Fly-in
 
-This project has been created as part of the 42 curriculum by jabuleje.
-
 ## 📖 Description
 
 Fly-in is a Python project developed as part of the 42 curriculum. It simulates drone routing through a network of connected zones, with the objective of transporting drones from a starting zone to a destination zone while minimizing the number of turns required.
@@ -191,11 +189,8 @@ AI tools were used as a learning and development aid during the project.
 
 Their use included:
 
-- Explaining graph theory and pathfinding concepts, including A*.
-- Reviewing algorithm design and discussing route selection strategies.
+- Explaining graph theory and pathfinding concepts, including A*.git statuts
 - Helping identify potential bugs and edge cases in Python code.
 - Explaining Python classes, type hints, and interactions between modules.
 - Assisting with the design and debugging of the Pygame visualization.
 - Supporting the preparation of project documentation.
-
-AI-generated suggestions were reviewed and adapted during development. The final implementation and understanding of the code remain the developer's responsibility.

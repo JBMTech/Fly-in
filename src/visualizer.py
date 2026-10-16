@@ -16,13 +16,16 @@ class Visualizer:
         graph: Graph,
         simulation: Simulation
     ) -> None:
+        """
+        Initialize the visualizer and configure the display
+        and animation settings.
+        """
 
         self.graph = graph
         self.simulation = simulation
 
         pygame.init()
 
-        # 1900, 1000
         self.screen = pygame.display.set_mode((2800, 1200))
         pygame.display.set_caption("Fly-in")
 
@@ -56,6 +59,9 @@ class Visualizer:
         self.calculate_transform()
 
     def calculate_transform(self) -> None:
+        """
+        Calculate the scale and offsets to fit the graph within the screen.
+        """
 
         zones = list(self.graph.zones.values())
 
@@ -93,6 +99,7 @@ class Visualizer:
         ) / 2 - min_y * self.scale
 
     def screen_position(self, zone: Zone) -> Tuple[int, int]:
+        """Convert a zone's graph coordinates into screen coordinates."""
 
         x = zone.x * self.scale + self.offset_x
         y = zone.y * self.scale + self.offset_y
@@ -116,6 +123,9 @@ class Visualizer:
         return self.simulation.history[self.history_index]
 
     def draw(self) -> None:
+        """
+        Render the graph, drones, simulation status, and navigation controls.
+        """
 
         self.screen.fill((30, 30, 30))
 
@@ -136,6 +146,10 @@ class Visualizer:
 
     def draw_connections(self,
                          link_counts: Dict[Tuple[str, str], int]) -> None:
+        """
+        Draw graph connections and display their current occupancy and
+        capacity.
+        """
 
         for connection in self.graph.connections:
 
@@ -177,6 +191,9 @@ class Visualizer:
             )
 
     def draw_zones(self, zone_counts: Dict[Any, Any]) -> None:
+        """
+        Draw the zones with their names, colors, and occupancy information.
+        """
 
         for zone in self.graph.zones.values():
 
@@ -223,6 +240,10 @@ class Visualizer:
             )
 
     def resolve_color(self, color_name: str) -> tuple[int, int, int]:
+        """
+        Convert a color name into an RGB tuple, using gray
+        if the color is invalid.
+        """
 
         try:
             color = pygame.Color(color_name)
@@ -254,6 +275,9 @@ class Visualizer:
             self.screen.blit(label, label_rect)
 
     def draw_turn(self) -> None:
+        """
+        Display the current turn, total recorded turns, and playback status.
+        """
 
         total_turns = max(
             len(self.simulation.history) - 1,
@@ -279,6 +303,7 @@ class Visualizer:
         self.screen.blit(status_text, (30, 70))
 
     def draw_controls(self) -> None:
+        """Display the keyboard controls used to navigate the simulation."""
 
         _, height = self.screen.get_size()
 
@@ -303,7 +328,7 @@ class Visualizer:
         )
 
     def next_turn(self) -> None:
-        """Advance one turn and animate the movement."""
+        """Advance to the next turn and animate drone movements."""
 
         if self.animating:
             return
@@ -345,7 +370,9 @@ class Visualizer:
             self.playing = False
 
     def previous_turn(self) -> None:
-        """Go back one turn and animate backwards."""
+        """
+        Return to the previous turn and animate drone movements backwards.
+        """
 
         if self.animating or self.history_index <= 0:
             return
@@ -359,6 +386,10 @@ class Visualizer:
         self.start_transition(old_positions)
 
     def run(self) -> None:
+        """
+        Run the visualization loop and handle user input, playback,
+        and animations.
+        """
 
         # Ensure the initial snapshot exists.
         if not self.simulation.history:
@@ -436,7 +467,10 @@ class Visualizer:
         pygame.quit()
 
     def get_drone_positions(self, snapshot: Snapshot) -> Dict[Any, Any]:
-        """Calculate pixel positions for every drone in a snapshot."""
+        """
+        Calculate the screen positions of drones inside zones and
+        along connections.
+        """
 
         drones_by_zone, drones_on_links, _, _ = snapshot
         positions = {}
@@ -484,7 +518,9 @@ class Visualizer:
         return positions
 
     def start_transition(self, start_positions: Dict[Any, Any]) -> None:
-        """Animate drones from one snapshot to another."""
+        """
+        Initialize an animation between the current and target drone positions.
+        """
 
         end_positions = self.get_drone_positions(
             self.current_snapshot()
@@ -514,7 +550,9 @@ class Visualizer:
         self.animating = True
 
     def get_animated_positions(self) -> Dict[Any, Any]:
-        """Interpolate drone positions during a transition."""
+        """
+        Calculate interpolated drone positions to produce smooth animations.
+        """
 
         if not self.animating:
             return self.get_drone_positions(

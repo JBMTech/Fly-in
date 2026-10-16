@@ -11,6 +11,10 @@ class Zone:
                  max_drones: int = 1,
                  color: str = "none",
                  zone_type: str = "normal") -> None:
+        """
+        Initialize a zone with a name, coordinates, maximum drone capacity,
+        color, and zone type.
+        """
         self.name = name
         self.x = x
         self.y = y
