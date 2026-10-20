@@ -22,7 +22,7 @@ class Simulation:
         graph: Graph,
         paths: List[List[Zone]],
         nb_drones: int,
-        flag: bool = False
+        flag: bool
     ) -> None:
         """Initialize the simulation and record the initial state."""
 
@@ -263,9 +263,15 @@ class Simulation:
             move = f"{drone.id}-{next_zone.name}"
 
             if self.flag and next_zone != self.graph.end_zone:
+
+                name = f"{connection.zone1}-{connection.zone2}"
+
                 move += (
-                    f"-{len(next_zone.drones)}"
-                    f"/{next_zone.max_drones}"
+                    f"-[{len(next_zone.drones)}"
+                    f"/{next_zone.max_drones}]"
+                    f"-{name}"
+                    f"-[{connection.drones_on_link}/"
+                    f"{connection.capacity}]"
                 )
 
             moves_this_turn.append(move)
