@@ -15,7 +15,7 @@ install:
 
 run:
 	@echo "$(BLUE)🚀 Starting simulation with map: '$(MAP)'...$(RESET)"
-	uv run python -m src.main $(MAP)
+	uv run python -m src.main $(MAP) $(ARGS)
 
 help:
 	@echo "$(CYAN)==================================================$(RESET)"
