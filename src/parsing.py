@@ -25,10 +25,10 @@ class Parser:
         try:
             with open(self.file_map, "r") as f:
                 lines = f.readlines()
-        except FileNotFoundError:
-            raise FileError("Not find File")
-        except PermissionError:
-            raise FileError("You do not have permission to read this File")
+        except FileNotFoundError as ex:
+            raise FileError(f"{ex}")
+        except PermissionError as ex:
+            raise FileError(f"{ex}")
 
         if not lines:
             raise ParsingError("The file is empty")

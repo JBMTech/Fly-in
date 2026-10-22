@@ -12,23 +12,28 @@ _RED = "\033[31m"
 _RESET = "\033[0m"
 
 
-def valid_arg() -> Tuple[str, bool]:
-    """Validate command-line arguments."""
+class Argument:
 
-    args = sys.argv[1:]
-    capacity_info = "--capacity-info" in args
+    def __init__(self, argv: list[str]) -> None:
+        self.argv = argv
 
-    if capacity_info:
-        args.remove("--capacity-info")
+    def valid_arg(self) -> Tuple[str, bool]:
+        """Validate command-line arguments."""
 
-    if len(args) != 1:
-        print(
-            "Usage: make run MAP=<map_file> "
-            "[ARGS=--capacity-info]"
-        )
-        sys.exit(1)
+        args = self.argv[1:]
+        capacity_info = "--capacity-info" in args
 
-    return args[0], capacity_info
+        if capacity_info:
+            args.remove("--capacity-info")
+
+        if len(args) != 1:
+            print(
+                f"{_RED}[ERROR]{_RESET} Usage: make run MAP=<map_file> "
+                "[ARGS=--capacity-info]"
+            )
+            sys.exit(1)
+
+        return args[0], capacity_info
 
 
 def main() -> None:
@@ -36,7 +41,9 @@ def main() -> None:
     Parse the map, find suitable paths, and
     run the drone simulation with visualization.
     """
-    file_map, info = valid_arg()
+    arg = Argument(sys.argv)
+    file_map, info = arg.valid_arg()
+
     parser = Parser(file_map)
 
     try:

@@ -176,8 +176,8 @@ The graphical interface helps users understand the graph topology, observe drone
 - [Python Documentation](https://docs.python.org/3/)
 - [Python `heapq` Documentation](https://docs.python.org/3/library/heapq.html)
 - [Pygame Documentation](https://www.pygame.org/docs/)
-- [Explicación de A* (YouTube)](https://www.youtube.com/watch?v=hQa9JTtq4Ok)
-- [Tutorial de A* (DataCamp)](https://www.datacamp.com/tutorial/a-star-algorithm)
+- [Explanation of A*(YouTube)](https://www.youtube.com/watch?v=hQa9JTtq4Ok)
+- [A* Tutorial (DataCamp)](https://www.datacamp.com/tutorial/a-star-algorithm)
 - [A* Search Algorithm — Red Blob Games](https://www.redblobgames.com/pathfinding/a-star/introduction.html)
 - [Graph Theory — NetworkX Documentation](https://networkx.org/documentation/stable/tutorial.html)
 
