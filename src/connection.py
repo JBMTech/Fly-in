@@ -9,7 +9,6 @@ class Connection:
         """
         Initialize a connection between two zones with a maximum capacity.
         """
-
         self.zone1 = zone1
         self.zone2 = zone2
         self.capacity = capacity

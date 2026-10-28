@@ -24,7 +24,6 @@ class Drone:
         Move the drone to the next point in its path, returning False
         if no further movement is possible.
         """
-
         if self.current_point + 1 >= len(self.path):
             return False
 

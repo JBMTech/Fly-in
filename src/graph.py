@@ -25,7 +25,6 @@ class Graph:
         ] = {}
 
     def add_zone(self, zone: Zone) -> None:
-        # Realizamos un diccioanrio de "nombre de zona" -> Zona
         self.zones[zone.name] = zone
         """Add a zone to the graph and initialize its adjacency list."""
         self.adjacency_list[zone] = []

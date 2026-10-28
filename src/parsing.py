@@ -128,7 +128,6 @@ class Parser:
 
         metadata: Dict[str, str | int] = {}
 
-        # Obtener información de los metadatos
         if "[" in data and "]" in data:
             if not ("[" in data and data.endswith("]")):
                 raise ParsingError("Invalid metadata")
@@ -276,7 +275,6 @@ class Parser:
         """
         Validate connection metadata and return the maximum link capacity.
         """
-
         if not metadata:
             raise ParsingError("Metadata connection is empty")
 

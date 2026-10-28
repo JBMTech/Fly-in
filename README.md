@@ -102,8 +102,6 @@ The exact metadata syntax and validation rules are implemented by the parser.
 
 ### 1. Graph representation
 
-The environment is modeled as an undirected graph.
-
 - **Zone:** Represents a location and stores its name, coordinates, type, color, maximum capacity, and drones currently occupying it.
 - **Connection:** Represents a link between two zones and stores its capacity.
 - **Graph:** Maintains the collection of zones, connections, adjacency lists, and connection lookups.
@@ -189,8 +187,7 @@ AI tools were used as a learning and development aid during the project.
 
 Their use included:
 
-- Explaining graph theory and pathfinding concepts, including A*.git statuts
+- Explaining graph theory and pathfinding concepts, including A*.
 - Helping identify potential bugs and edge cases in Python code.
 - Explaining Python classes, type hints, and interactions between modules.
 - Assisting with the design and debugging of the Pygame visualization.
-- Supporting the preparation of project documentation.

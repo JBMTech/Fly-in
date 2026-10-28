@@ -25,7 +25,6 @@ class Simulation:
         flag: bool
     ) -> None:
         """Initialize the simulation and record the initial state."""
-
         self.graph = graph
         self.paths = paths
         self.nb_drones = nb_drones
@@ -52,7 +51,6 @@ class Simulation:
         Create drones and place them at the starting zone,
         assigning each a path.
         """
-
         if self.drones or not self.paths:
             return
 
@@ -73,7 +71,6 @@ class Simulation:
 
     def reserved_drones(self, zone: Zone) -> int:
         """Count the drones travelling to a zone that have not arrived yet."""
-
         count = 0
 
         for drone in self.drones:
@@ -126,7 +123,6 @@ class Simulation:
         Capture the current positions of drones and
         the occupancy of zones and links.
         """
-
         drones_by_zone: Dict[str, List[str]] = {}
         drones_on_links: Dict[Tuple[str, str], List[str]] = {}
 
@@ -183,7 +179,6 @@ class Simulation:
         Execute one simulation turn, update drone movements,
         and record the resulting state.
         """
-
         for connection in self.graph.connections:
             connection.drones_on_link = 0
 

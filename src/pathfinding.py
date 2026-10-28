@@ -169,7 +169,6 @@ class Pathfinding:
             if path not in candidates:
                 candidates.append(path)
 
-            # Penalize intermediate zones to encourage alternatives
             for zone in path[1:-1]:
                 penalties[zone] = penalties.get(zone, 0.0) + 2.0
 
