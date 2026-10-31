@@ -6,7 +6,7 @@ from .graph import Graph
 from .simulation import Simulation
 from .visualizer import Visualizer
 from .pathfinding import Pathfinding
-from .exceptions import ParsingError
+from .exceptions import ParsingError, FileError
 
 _RED = "\033[31m"
 _RESET = "\033[0m"
@@ -96,6 +96,10 @@ def main() -> None:
     except ParsingError as ex:
         print(
             f"{_RED}[ERROR]{_RESET} {ex}"
+        )
+    except FileError as e:
+        print(
+            f"{_RED}[ERROR]{_RESET} {e}"
         )
 
 
